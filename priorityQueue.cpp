@@ -1,3 +1,11 @@
+// for max heap
+class Compare {
+    public:
+       bool operator()(int a, int b){
+           return a < b;
+      }
+};
+
 void solve() {
     priority_queue<int> maxHeap;
 
