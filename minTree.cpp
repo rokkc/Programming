@@ -1,65 +1,52 @@
-vector<int> build(vector<int>& v) {
-    int n = v.size();
-    vector<int> tree(4 * n);
-    function<void(int, int, int)> buildTree = [&](int node, int start, int end) {
-        if (start == end) {
-            tree[node] = v[start];
-        } else {
-            int mid = (start + end) / 2;
-            buildTree(2 * node, start, mid);
-            buildTree(2 * node + 1, mid + 1, end);
-            tree[node] = min(tree[2 * node], tree[2 * node + 1]);
-        }
-    };
-    buildTree(1, 0, n - 1);
+vector<int> build_tree(const vector<int>& data) {
+    int n = data.size();
+    vector<int> tree(2 * n);
+    for (int i = 0; i < n; ++i) {
+        tree[n + i] = data[i];
+    }
+    for (int i = n - 1; i > 0; --i) {
+        tree[i] = min(tree[2 * i], tree[2 * i + 1]);
+    }
     return tree;
 }
 
-void update(vector<int>& tree, vector<int>& v, int idx, int val) {
-    int n = v.size();
-    int node = 1, start = 0, end = n - 1;
-    while (start != end) {
-        int mid = (start + end) / 2;
-        if (start <= idx && idx <= mid) {
-            node = 2 * node;
-            end = mid;
-        } else {
-            node = 2 * node + 1;
-            start = mid + 1;
-        }
-    }
-    v[idx] = val;
-    tree[node] = val;
-    while (node > 1) {
-        node /= 2;
-        tree[node] = min(tree[2 * node], tree[2 * node + 1]);
+void update_tree(vector<int>& tree, int index, int value) {
+    int n = tree.size() / 2;
+    index += n;
+    tree[index] = value;
+    while (index > 1) {
+        index /= 2;
+        tree[index] = min(tree[2 * index], tree[2 * index + 1]);
     }
 }
 
-int query(vector<int>& tree, int L, int R) {
-    int n = tree.size() / 4;
-    function<int(int, int, int, int, int)> queryTreeHelper = [&](int node, int start, int end, int L, int R) {
-        if (R < start || end < L) {
-            return INT_MAX;
+int query_tree(const vector<int>& tree, int left, int right) {
+    int n = tree.size() / 2;
+    left += n;
+    right += n + 1; // Make the interval inclusive
+    int min_val = INT_MAX;
+    while (left < right) {
+        if (left % 2 == 1) {
+            min_val = min(min_val, tree[left]);
+            left++;
         }
-        if (L <= start && end <= R) {
-            return tree[node];
+        if (right % 2 == 1) {
+            right--;
+            min_val = min(min_val, tree[right]);
         }
-        int mid = (start + end) / 2;
-        int left_query = queryTreeHelper(2 * node, start, mid, L, R);
-        int right_query = queryTreeHelper(2 * node + 1, mid + 1, end, L, R);
-        return min(left_query, right_query);
-    };
-    return queryTreeHelper(1, 0, n - 1, L, R);
+        left /= 2;
+        right /= 2;
+    }
+    return min_val;
 }
+
 
 void solve() {
-    vector<int> v = {3242, 545, 1231, 345345, 45344, 54, 45452, 3423};
-    vector<int> tree = build(v);
+    vector<int> data = {123, 4, 23, 1, 34, 2, 123, 0, 232, 313, 4, 12, 33};
+    vector<int> tree = build_tree(data);
 
-    cout << "Min in range [1, 4]: " << query(tree, 1, 4) << endl;
+    cout << "Min value in range [1, 7]: " << query_tree(tree, 1, 7) << endl;
 
-    update(tree, v, 3, 43);
-
-    cout << "Min in range [1, 4] after update: " << query(tree, 1, 4) << endl;
+    update_tree(tree, 7, 2);
+    cout << "Min value in range [1, 7] after update: " << query_tree(tree, 1, 7) << endl;
 }
