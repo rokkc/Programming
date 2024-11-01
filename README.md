@@ -1,2 +1,2 @@
 # USACO
-USACO implementations for various algorithms and data structures
+Implementations for various algorithms and data structures
