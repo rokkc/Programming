@@ -45,9 +45,9 @@ void solve() {
     vector<int> data = {123, 4, 23, 1, 34, 2, 123, 234234, 232, 313, 4, 12, 33};
     vector<int> tree = build_tree(data);
 
-    cout << "Max value in range [1, 5]: " << query_tree(tree, 1, 7) << endl;
+    cout << "Max value in range [1, 7]: " << query_tree(tree, 1, 7) << endl;
 
     update_tree(tree, 7, 2);
-    cout << "Max value in range [1, 5] after update: " << query_tree(tree, 1, 7) << endl;
+    cout << "Max value in range [1, 7] after update: " << query_tree(tree, 1, 7) << endl;
 }
 
