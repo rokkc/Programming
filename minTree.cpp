@@ -23,7 +23,7 @@ void update_tree(vector<int>& tree, int index, int value) {
 int query_tree(const vector<int>& tree, int left, int right) {
     int n = tree.size() / 2;
     left += n;
-    right += n + 1; // Make the interval inclusive
+    right += n + 1;
     int min_val = INT_MAX;
     while (left < right) {
         if (left % 2 == 1) {
