@@ -20,23 +20,25 @@ void unionSets(vector<int>& parent, vector<int>& rank, int u, int v) {
     }
 }
 
-vector<vector<int>> kruskal(int n, vector<vector<int>>& edges) {
+vector<vector<int>> kruskal(int n, vector<vector<pair<int, int>>>& adj) {
     vector<vector<int>> mst;
     vector<int> parent(n);
     vector<int> rank(n, 0);
+    vector<tuple<int, int, int>> edges;
 
     for (int i = 0; i < n; ++i) {
         parent[i] = i;
+        for (auto& [v, weight] : adj[i]) {
+            edges.push_back({weight, i, v});
+        }
     }
 
-    sort(edges.begin(), edges.end(), [](const vector<int>& a, const vector<int>& b) {
-        return a[2] < b[2];
-    });
+    sort(edges.begin(), edges.end());
 
-    for (const auto& edge : edges) {
-        if (find(parent, edge[0]) != find(parent, edge[1])) {
-            unionSets(parent, rank, edge[0], edge[1]);
-            mst.push_back(edge);
+    for (const auto& [weight, u, v] : edges) {
+        if (find(parent, u) != find(parent, v)) {
+            unionSets(parent, rank, u, v);
+            mst.push_back({u, v, weight});
         }
     }
 
@@ -45,6 +47,8 @@ vector<vector<int>> kruskal(int n, vector<vector<int>>& edges) {
 
 void solve() {
     int n = 6;
+    vector<vector<pair<int, int>>> adj(n);
+
     vector<vector<int>> edges = {
         {1, 2, 9},
         {1, 3, 4},
@@ -56,7 +60,12 @@ void solve() {
         {5, 6, 7}
     };
 
-    vector<vector<int>> mst = kruskal(n, edges);
+    for (vector<int> &edge: edges) {
+        adj[edge[0] - 1].push_back(make_pair(edge[1] - 1, edge[2]));
+        adj[edge[1] - 1].push_back(make_pair(edge[0] - 1, edge[2]));
+    }
+
+    vector<vector<int>> mst = kruskal(n, adj);
 
     cout << "Edges in the Minimum Spanning Tree:" << endl;
     for (const auto& edge: mst) {
