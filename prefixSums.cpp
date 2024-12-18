@@ -6,7 +6,7 @@ vector<int> buildPrefixVector(vector<int>& v) {
     return prefs;
 }
 
-int prefQuery(vector<int> prefs, int i, int j) {
+int prefQuery(vector<int> &prefs, int i, int j) {
     return prefs[j + 1] - prefs[i];
 }
 
