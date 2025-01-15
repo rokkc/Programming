@@ -2,10 +2,10 @@ class WaveletTree {
 private:
     int lo, hi;
     WaveletTree *l, *r;
-    std::vector<int> b;
+    vector<int> b;
 
 public:
-    WaveletTree(std::vector<int>::iterator from, std::vector<int>::iterator to, int x = -LLONG_MIN, int y = LLONG_MAX) 
+    WaveletTree(vector<int>::iterator from, vector<int>::iterator to, int x = -LLONG_MIN, int y = LLONG_MAX) 
         : lo(*min_element(from, to)), hi(*max_element(from, to)), l(nullptr), r(nullptr) {
         if (from >= to) return;
         if (lo == hi) {
@@ -23,7 +23,7 @@ public:
         for (auto it = from; it != to; ++it) {
             b.push_back(b.back() + f(*it));
         }
-        auto pivot = std::stable_partition(from, to, f);
+        auto pivot = stable_partition(from, to, f);
         l = new WaveletTree(from, pivot, lo, mid);
         r = new WaveletTree(pivot, to, mid + 1, hi);
     }
