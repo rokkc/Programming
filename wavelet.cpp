@@ -5,7 +5,7 @@ private:
     vector<int> b;
 
 public:
-    WaveletTree(vector<int>::iterator from, vector<int>::iterator to, int x = -LLONG_MIN, int y = LLONG_MAX) 
+    WaveletTree(vector<int>::iterator from, vector<int>::iterator to, int x = LLONG_MIN, int y = LLONG_MAX) 
         : lo(*min_element(from, to)), hi(*max_element(from, to)), l(nullptr), r(nullptr) {
         if (from >= to) return;
         if (lo == hi) {
