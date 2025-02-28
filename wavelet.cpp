@@ -1,51 +1,89 @@
-template <typename T>
-class WaveletTree {
-private:
-    int lo, hi;
-    WaveletTree *l, *r;
-    vector<int> b;
+template<typename T>
+class WaveletMatrix {
+    int n, maxLog;
+    vector<vector<int>> mat;
+    vector<int> zs;
     vector<T>* values;
-    bool isRoot;
 public:
-    WaveletTree(typename vector<T>::iterator from, typename vector<T>::iterator to) {
-        isRoot = true;
+    WaveletMatrix(typename vector<T>::iterator from, typename vector<T>::iterator to) {
         vector<T> temp(from, to);
         vector<T> sorted = temp;
         sort(sorted.begin(), sorted.end());
         sorted.erase(unique(sorted.begin(), sorted.end()), sorted.end());
         values = new vector<T>(sorted.begin(), sorted.end());
-        lo = 0; hi = values->size() - 1;
-        vector<int> comp; comp.resize(temp.size());
-        for (size_t i = 0; i < temp.size(); ++i) comp[i] = lower_bound(values->begin(), values->end(), temp[i]) - values->begin();
-        b.reserve(comp.size() + 1); b.push_back(0);
-        if (lo == hi) { for (auto x : comp) b.push_back(b.back() + 1); l = r = nullptr; }
-        else { int mid = lo + (hi - lo) / 2; auto f = [mid](int x){ return x <= mid; }; for (auto x : comp) b.push_back(b.back() + (f(x) ? 1 : 0)); auto pivot = stable_partition(comp.begin(), comp.end(), f); l = (comp.begin() != pivot) ? new WaveletTree(comp.begin(), pivot, lo, mid, values) : nullptr; r = (pivot != comp.end()) ? new WaveletTree(pivot, comp.end(), mid + 1, hi, values) : nullptr; }
+        vector<int> A(temp.size());
+        for (size_t i = 0; i < temp.size(); i++) {
+            A[i] = lower_bound(values->begin(), values->end(), temp[i]) - values->begin();
+        }
+        n = A.size();
+        int m = values->size();
+        maxLog = m > 1 ? 32 - __builtin_clz(m - 1) : 1;
+        mat.resize(maxLog);
+        zs.resize(maxLog);
+        for (int i = 0; i < maxLog; i++) {
+            int bit = maxLog - 1 - i;
+            mat[i].resize(n + 1);
+            mat[i][0] = 0;
+            for (int j = 0; j < n; j++) {
+                mat[i][j + 1] = mat[i][j] + ((A[j] >> bit) & 1);
+            }
+            zs[i] = n - mat[i][n];
+            vector<int> B(n);
+            int z = 0, o = zs[i];
+            for (int j = 0; j < n; j++) {
+                if (((A[j] >> bit) & 1) == 0)
+                    B[z++] = A[j];
+                else
+                    B[o++] = A[j];
+            }
+            A.swap(B);
+        }
     }
-private:
-    WaveletTree(typename vector<int>::iterator from, typename vector<int>::iterator to, int lo, int hi, vector<T>* values)
-         : lo(lo), hi(hi), l(nullptr), r(nullptr), values(values), isRoot(false) {
-        b.reserve((to - from) + 1); b.push_back(0);
-        if (lo == hi) { for (auto it = from; it != to; ++it) b.push_back(b.back() + 1); return; }
-        int mid = lo + (hi - lo) / 2; auto f = [mid](int x){ return x <= mid; };
-        for (auto it = from; it != to; ++it) b.push_back(b.back() + (f(*it) ? 1 : 0));
-        auto pivot = stable_partition(from, to, f);
-        if (from != pivot) l = new WaveletTree(from, pivot, lo, mid, values);
-        if (pivot != to) r = new WaveletTree(pivot, to, mid + 1, hi, values);
+
+    T kth(int l, int r, int k) {
+        int res = 0, L = l, R = r;
+        for (int i = 0; i < maxLog; i++) {
+            int onesL = mat[i][L];
+            int onesR = mat[i][R + 1];
+            int zerosCount = (R - L + 1) - (onesR - onesL);
+            if (k < zerosCount) {
+                int newL = L - mat[i][L];
+                L = newL;
+                R = newL + zerosCount - 1;
+            } else {
+                k -= zerosCount;
+                int newL = zs[i] + mat[i][L];
+                int newR = zs[i] + onesR - 1;
+                L = newL;
+                R = newR;
+                res |= 1 << (maxLog - 1 - i);
+            }
+        }
+        return (*values)[res];
     }
-public:
-    T kth(int i, int j, int k) {
-        if (i > j) return T();
-        if (lo == hi) return (*values)[lo];
-        int inLeft = b[j + 1] - b[i];
-        if (k < inLeft) return l->kth(b[i], b[j + 1] - 1, k);
-        else return r->kth(i - b[i], j - b[j + 1], k - inLeft);
+
+    int LTE(int l, int r, T x) {
+        int c = upper_bound(values->begin(), values->end(), x) - values->begin();
+        int ans = 0, L = l, R = r;
+        for (int i = 0; i < maxLog; i++) {
+            int bit = (c >> (maxLog - 1 - i)) & 1;
+            int onesL = mat[i][L];
+            int onesR = mat[i][R + 1];
+            int zerosCount = (R - L + 1) - (onesR - onesL);
+            if (bit == 1) {
+                ans += zerosCount;
+                L = zs[i] + mat[i][L];
+                R = zs[i] + onesR - 1;
+            } else {
+                int newL = L - mat[i][L];
+                L = newL;
+                R = newL + zerosCount - 1;
+            }
+        }
+        return ans;
     }
-    int LTE(int i, int j, T x) {
-        if (i > j || x < (*values)[lo]) return 0;
-        if ((*values)[hi] <= x) return j - i + 1;
-        int leftCount = (l ? l->LTE(b[i], b[j + 1] - 1, x) : 0);
-        int rightCount = (r ? r->LTE(i - b[i], j - b[j + 1], x) : 0);
-        return leftCount + rightCount;
+
+    ~WaveletMatrix() {
+        delete values;
     }
-    ~WaveletTree() { delete l; delete r; if (isRoot) delete values; }
 };
