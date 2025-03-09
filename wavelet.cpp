@@ -17,7 +17,7 @@ public:
         }
         n = A.size();
         int m = values->size();
-        maxLog = m > 1 ? 32 - __builtin_clz(m - 1) : 1;
+        maxLog = m > 0 ? 32 - __builtin_clz(m) : 1;
         mat.resize(maxLog);
         zs.resize(maxLog);
         for (int i = 0; i < maxLog; i++) {
